@@ -1,0 +1,1 @@
+PROJECT_NAME:str = "Automacao Relatorio Auditoria"
