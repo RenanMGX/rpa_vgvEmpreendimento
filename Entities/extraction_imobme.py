@@ -14,6 +14,7 @@ from functools import wraps
 from dependencies.config import Config
 from dependencies.functions import P
 import traceback
+import xlwings as xw
 
 def _verific_login(*, nav:webdriver.Chrome) -> None:
     try:
@@ -21,7 +22,7 @@ def _verific_login(*, nav:webdriver.Chrome) -> None:
         nav.maximize_window()
         print(P("Fazendo Login", color='cyan'))
             
-        crd = Credential(Config()['credential']['crd']).load()
+        crd = Credential(Config()['credential']['imobme']).load()
         nav.find_element(By.XPATH, '//*[@id="login"]').send_keys(crd['login'])
         nav.find_element(By.XPATH, '//*[@id="password"]').send_keys(crd['password'])
         nav.find_element(By.XPATH, '//*[@id="password"]').send_keys(Keys.RETURN)
@@ -63,26 +64,31 @@ def _find_element(*, browser: webdriver.Chrome, mod, target:str, timeout:int=30,
     raise Exception(f"não foi possivel encontrar o {target=} pelo {mod=}")
 
 
-class BotExtractionImobme():
-    def __init__(self, user:str, password:str, download_path:str=f"{os.getcwd()}\\downloads\\") -> None:
-        self.__user:str = user
-        self.__password:str = password
+class ExtractionImobme():
+    def __init__(self, *, download_path:str=f"{os.getcwd()}\\downloads\\") -> None:
+        crd:dict = Credential(Config()['credential']['imobme']).load()
+        self.__user:str = crd['login']
+        self.__password:str = crd['password']
         self.download_path:str = download_path
         
         if not os.path.exists(self.download_path):
             os.makedirs(self.download_path)
-        else:
-            for file in os.listdir(self.download_path):
-                try:
-                    os.unlink(self.download_path + file)
-                except PermissionError:
-                    os.rmdir(self.download_path + file)
                     
         prefs: dict = {"download.default_directory" : self.download_path}
         chrome_options: Options = Options()
-        chrome_options.add_experimental_option("prefs", prefs)     
+        chrome_options.add_experimental_option("prefs", prefs)   
         
-        self.navegador: webdriver.Chrome = webdriver.Chrome(options=chrome_options)
+        self.__chrome_options = chrome_options
+        
+    def __startNav(self):  
+        for file in os.listdir(self.download_path):
+            file = os.path.join(self.download_path, file)
+            try:
+                os.unlink(file)
+            except PermissionError:
+                os.rmdir(file)
+              
+        self.navegador: webdriver.Chrome = webdriver.Chrome(options=self.__chrome_options)
         self.navegador.get("http://patrimarengenharia.imobme.com/Autenticacao/Login")
         self.navegador.maximize_window()
     
@@ -160,7 +166,7 @@ class BotExtractionImobme():
                             _find_element(browser=self.navegador, mod=By.ID, target='Relatorios_chzn').click() # clique em selecionar Relatorios
                             _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Relatorios_chzn_o_6"]').click() # clique em IMOBME - Contre de Vendas
                             sleep(TEMPO_ESPERA_TENTATIVA)
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataInicio"]').send_keys("01012015") # escreve a data de inicio padrao 01/01/2015
+                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataInicio"]').send_keys("01012000") # escreve a data de inicio padrao 01/01/2000
                         _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
                         _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataFim"]').send_keys(datetime.now().strftime("%d%m%Y")) # escreve a data hoje
                         _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
@@ -183,324 +189,6 @@ class BotExtractionImobme():
                 if not finalizou:
                     raise Exception(f"erro ao gerar {relatorie=}")
                 
-            elif (relatorie:="imobme_controle_vendas_90_dias") == rel:
-                finalizou:bool = False
-                for num in range(5):
-                    try:
-                        for _ in range(NUM_TENTATIVAS):
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Content"]').location_once_scrolled_into_view
-                            _find_element(browser=self.navegador, mod=By.ID, target='Relatorios_chzn').click() # clique em selecionar Relatorios
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Relatorios_chzn_o_6"]').click() # clique em IMOBME - Contre de Vendas
-                            sleep(TEMPO_ESPERA_TENTATIVA)
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataInicio"]').send_keys((datetime.now() - relativedelta(days=90)).strftime("%d%m%Y")) # escreve a data de inicio com um range de 90 dias
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataFim"]').send_keys(datetime.now().strftime("%d%m%Y")) # escreve a data hoje
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="TipoDataSelecionada_chzn"]/a').click() # clique em Tipo Data
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="TipoDataSelecionada_chzn_o_0"]').click() # clique em Data Lançamento Venda
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clique em Empreendimentos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/ul/li[2]/a/label/input').click() # clique em Todos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clique em Empreendimentos
-                        
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="GerarRelatorio"]').click() # clica em gerar relatorio
-                        sleep(7)
-                        self.relatories_id[relatorie] = self.navegador.find_element(By.XPATH, '//*[@id="result-table"]/tbody/tr[1]/td[1]').text
-                        finalizou = True
-                        print(P(f"relatorio {relatorie} foi gerado!"))
-                        break
-                    except Exception as error:
-                        self.navegador.get("https://patrimarengenharia.imobme.com/Relatorio/")
-                        Logs().register(status='Report', description=f"erro {num} ao gerar {relatorie=}", exception=traceback.format_exc())
-                        sleep(1)
-                if not finalizou:
-                    raise Exception(f"erro ao gerar {relatorie=}")
-                
-            elif (relatorie:="imobme_contratos_rescindidos") == rel:
-                finalizou:bool = False
-                for num in range(5):
-                    try:
-                        for _ in range(NUM_TENTATIVAS):
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Content"]').location_once_scrolled_into_view
-                            _find_element(browser=self.navegador, mod=By.ID, target='Relatorios_chzn').click() # clique em selecionar Relatorios
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Relatorios_chzn_o_4"]').click()  # clique em IMOBME - Contratos Rescindicos
-                            sleep(TEMPO_ESPERA_TENTATIVA)
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataInicio"]').send_keys("01012015") # escreve a data de inicio padrao 01/01/2015
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataFim"]').send_keys(datetime.now().strftime("%d%m%Y")) # escreve a data hoje
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="parametrosReport"]/div[2]/div/div[3]/div/button').click()  # clique em Tipo de Contrato
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="parametrosReport"]/div[2]/div/div[3]/div/ul/li[2]/a/label/input').click() # clique em Todos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="parametrosReport"]/div[2]/div/div[3]/div/button').click() # clique em Tipo de Contrato
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clica em empreendimentos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/ul/li[2]/a/label/input').click() # clique em Todos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clica em empreendimentos
-                    
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="GerarRelatorio"]').click() # clica em gerar relatorio
-                        sleep(7)
-                        self.relatories_id[relatorie] = self.navegador.find_element(By.XPATH, '//*[@id="result-table"]/tbody/tr[1]/td[1]').text
-                        finalizou = True
-                        print(P(f"relatorio {relatorie} foi gerado!"))
-                        break
-                    except Exception as error:
-                        self.navegador.get("https://patrimarengenharia.imobme.com/Relatorio/")
-                        Logs().register(status='Report', description=f"erro {num} ao gerar {relatorie=}", exception=traceback.format_exc())
-                        sleep(1)
-                if not finalizou:
-                    raise Exception(f"erro ao gerar {relatorie=}")
-                
-            elif (relatorie:="imobme_contratos_rescindidos_90_dias") == rel:
-                finalizou:bool = False
-                for num in range(5):
-                    try:
-                        for _ in range(NUM_TENTATIVAS):
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Content"]').location_once_scrolled_into_view
-                            _find_element(browser=self.navegador, mod=By.ID, target='Relatorios_chzn').click() # clique em selecionar Relatorios
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Relatorios_chzn_o_4"]').click()  # clique em IMOBME - Contratos Rescindicos
-                            sleep(TEMPO_ESPERA_TENTATIVA)
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataInicio"]').send_keys((datetime.now() - relativedelta(days=90)).strftime("%d%m%Y")) # escreve a data de inicio padrao 01/01/2015
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataFim"]').send_keys(datetime.now().strftime("%d%m%Y")) # escreve a data hoje
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="parametrosReport"]/div[2]/div/div[3]/div/button').click()  # clique em Tipo de Contrato
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="parametrosReport"]/div[2]/div/div[3]/div/ul/li[2]/a/label/input').click() # clique em Todos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="parametrosReport"]/div[2]/div/div[3]/div/button').click() # clique em Tipo de Contrato
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clica em empreendimentos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/ul/li[2]/a/label/input').click() # clique em Todos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clica em empreendimentos
-                        
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="GerarRelatorio"]').click() # clica em gerar relatorio
-                        sleep(7)
-                        self.relatories_id[relatorie] = self.navegador.find_element(By.XPATH, '//*[@id="result-table"]/tbody/tr[1]/td[1]').text
-                        finalizou = True
-                        print(P(f"relatorio {relatorie} foi gerado!"))
-                        break
-                    except Exception as error:
-                        self.navegador.get("https://patrimarengenharia.imobme.com/Relatorio/")
-                        Logs().register(status='Report', description=f"erro {num} ao gerar {relatorie=}", exception=traceback.format_exc())
-                        sleep(1)
-                if not finalizou:
-                    raise Exception(f"erro ao gerar {relatorie=}")
-
-            elif (relatorie:="imobme_dados_contrato") == rel:
-                finalizou:bool = False
-                for num in range(5):
-                    try:
-                        for _ in range(NUM_TENTATIVAS):
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Content"]').location_once_scrolled_into_view
-                            _find_element(browser=self.navegador, mod=By.ID, target='Relatorios_chzn').click() # clique em selecionar Relatorios
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Relatorios_chzn_o_7"]').click() # clique em IMOBME - Dados de Contrato
-                            sleep(TEMPO_ESPERA_TENTATIVA)
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clica em Empreendimentos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/ul/li[2]/a/label').click() # clica em todos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clica em Empreendimentos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="parametrosReport"]/div[1]/div').click() # clica fora
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="parametrosReport"]/div[3]/div[1]/div/button').click() # clica em tipos de contrato
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="parametrosReport"]/div[3]/div[1]/div/ul/li[2]/a/label/input').click() # clica em Todos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="parametrosReport"]/div[1]/div').click() # clica fora
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataBase"]').send_keys(datetime.now().strftime("%d%m%Y")) # escreve a data hoje
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="GerarRelatorio"]').click() # clica em gerar relatorio
-                        sleep(7)
-                        self.relatories_id[relatorie] = self.navegador.find_element(By.XPATH, '//*[@id="result-table"]/tbody/tr[1]/td[1]').text
-                        finalizou = True
-                        print(P(f"relatorio {relatorie} foi gerado!"))
-                        break
-
-                    except Exception as error:
-                        self.navegador.get("https://patrimarengenharia.imobme.com/Relatorio/")
-                        Logs().register(status='Report', description=f"erro {num} ao gerar {relatorie=}", exception=traceback.format_exc())
-                        sleep(1)
-                if not finalizou:
-                    raise Exception(f"erro ao gerar {relatorie=}")
-
-            elif (relatorie:="imobme_previsao_receita") == rel:
-                finalizou:bool = False
-                for num in range(5):
-                    try:
-                        for _ in range(NUM_TENTATIVAS):
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Content"]').location_once_scrolled_into_view
-                            _find_element(browser=self.navegador, mod=By.ID, target='Relatorios_chzn').click() # clique em selecionar Relatorios
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Relatorios_chzn_o_9"]').click() # clique em IMOBME - Previsão de Receita
-                            sleep(TEMPO_ESPERA_TENTATIVA)
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataInicio"]').send_keys("01012015") # escreve a data de inicio padrao 01/01/2015
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataFim"]').send_keys((datetime.now() + relativedelta(years=25)).strftime("%d%m%Y")) # escreve a data de fim padrao com a data atual mais 25 anos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clica em Empreendimentos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/ul/li[2]/a/label/input').click() # clica em todos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clica em Empreendimentos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataBase"]').send_keys(datetime.now().strftime("%d%m%Y")) # escreve a data de hoje
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        sleep(1)
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="parametrosReport"]/div[4]/div/div[2]/div/button').click() # clica em Tipo Parcela
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="parametrosReport"]/div[4]/div/div[2]/div/ul/li[2]/a/label/input').click() # clica em Todos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="parametrosReport"]/div[4]/div/div[2]/div/button').click() # clica em Tipo Parcela
-                        
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="GerarRelatorio"]').click() # clica em gerar relatorio
-                        sleep(7)
-                        self.relatories_id[relatorie] = self.navegador.find_element(By.XPATH, '//*[@id="result-table"]/tbody/tr[1]/td[1]').text
-                        finalizou = True
-                        print(P(f"relatorio {relatorie} foi gerado!"))
-                        break
-
-                    except Exception as error:
-                        self.navegador.get("https://patrimarengenharia.imobme.com/Relatorio/")
-                        Logs().register(status='Report', description=f"erro {num} ao gerar {relatorie=}", exception=traceback.format_exc())
-                        sleep(1)
-                if not finalizou:
-                    raise Exception(f"erro ao gerar {relatorie=}")
-
-            elif (relatorie:="imobme_relacao_clientes") == rel:
-                finalizou:bool = False
-                for num in range(5):
-                    try:
-                        for _ in range(2):
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Content"]').location_once_scrolled_into_view
-                            _find_element(browser=self.navegador, mod=By.ID, target='Relatorios_chzn').click() # clique em selecionar Relatorios
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Relatorios_chzn_o_10"]').click() # clique em IMOBME - Relação de Clientes
-                            sleep(TEMPO_ESPERA_TENTATIVA)
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataInicio"]').send_keys("01012015") # escreve a data de inicio padrao 01/01/2015
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataFim"]').send_keys(datetime.now().strftime("%d%m%Y")) # escreve a data de hoje
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="GerarRelatorio"]').click() # clica em gerar relatorio
-                        sleep(7)
-                        self.relatories_id[relatorie] = self.navegador.find_element(By.XPATH, '//*[@id="result-table"]/tbody/tr[1]/td[1]').text
-                        finalizou = True
-                        print(P(f"relatorio {relatorie} foi gerado!"))
-                        break
-
-                    except Exception as error:
-                        self.navegador.get("https://patrimarengenharia.imobme.com/Relatorio/")
-                        Logs().register(status='Report', description=f"erro {num} ao gerar {relatorie=}", exception=traceback.format_exc())
-                        sleep(1)
-                if not finalizou:
-                    raise Exception(f"erro ao gerar {relatorie=}")
-
-            elif (relatorie:="imobme_relacao_clientes_x_clientes") == rel:
-                finalizou:bool = False
-                for num in range(5):
-                    try:
-                        for _ in range(2):
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Content"]').location_once_scrolled_into_view
-                            _find_element(browser=self.navegador, mod=By.ID, target='Relatorios_chzn').click() # clique em selecionar Relatorios
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Relatorios_chzn_o_10"]').click() # clique em IMOBME - Relação de Clientes
-                            sleep(TEMPO_ESPERA_TENTATIVA)
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="tipoReportCliente_chzn"]').click() # clica em tipo de relatorio
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="tipoReportCliente_chzn_o_1"]').click() # clica em clientes x contratos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvTipoContrato"]/div/button').click() # clica em tipo de contrato
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvTipoContrato"]/div/ul/li[2]/a/label/input').click() # clica em todos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvTipoContrato"]/div/button').click() # clica em tipo de contrato
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clica em empreendimentos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/ul/li[2]/a/label/input').click() # clica em todos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clica em empreendimentos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataInicio"]').send_keys("01012015") # escreve a data de inicio padrao 01/01/2015
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataFim"]').send_keys(datetime.now().strftime("%d%m%Y")) # escreve a data de hoje
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="GerarRelatorio"]').click() # clica em gerar relatorio
-                        sleep(7)
-                        self.relatories_id[relatorie] = self.navegador.find_element(By.XPATH, '//*[@id="result-table"]/tbody/tr[1]/td[1]').text
-                        finalizou = True
-                        print(P(f"relatorio {relatorie} foi gerado!"))
-                        break
-
-                    except Exception as error:
-                        self.navegador.get("https://patrimarengenharia.imobme.com/Relatorio/")
-                        Logs().register(status='Report', description=f"erro {num} ao gerar {relatorie=}", exception=traceback.format_exc())
-                        sleep(1)
-                if not finalizou:
-                    raise Exception(f"erro ao gerar {relatorie=}")
-
-            elif (relatorie:="imobme_cadastro_datas") == rel:
-                finalizou:bool = False
-                for num in range(5):
-                    try:
-                        for _ in range(NUM_TENTATIVAS):
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Content"]').location_once_scrolled_into_view
-                            _find_element(browser=self.navegador, mod=By.ID, target='Relatorios_chzn').click() # clique em selecionar Relatorios
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Relatorios_chzn_o_3"]').click()  # clique em IMOBME - Cadastro de Datas
-                            sleep(TEMPO_ESPERA_TENTATIVA)
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clica em Empreendimentos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/ul/li[2]/a/label').click() # clica em todos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clica em Empreendimentos
-                        
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="GerarRelatorio"]').click() # clica em gerar relatorio
-                        sleep(7)
-                        self.relatories_id[relatorie] = self.navegador.find_element(By.XPATH, '//*[@id="result-table"]/tbody/tr[1]/td[1]').text
-                        finalizou = True
-                        print(P(f"relatorio {relatorie} foi gerado!"))
-                        break
-
-                    except Exception as error:
-                        self.navegador.get("https://patrimarengenharia.imobme.com/Relatorio/")
-                        Logs().register(status='Report', description=f"erro {num} ao gerar {relatorie=}", exception=traceback.format_exc())
-                        sleep(1)
-                if not finalizou:
-                    raise Exception(f"erro ao gerar {relatorie=}")
-
-            elif (relatorie:="recebimentos_compensados") == rel:
-                finalizou:bool = False
-                for num in range(5):
-                    try:
-                        for _ in range(NUM_TENTATIVAS):
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Content"]').location_once_scrolled_into_view
-                            _find_element(browser=self.navegador, mod=By.ID, target='Relatorios_chzn').click() # clique em selecionar Relatorios
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Relatorios_chzn_o_16"]').click()  # clique em Recebimentos Compensados
-                            sleep(TEMPO_ESPERA_TENTATIVA)
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataInicio"]').send_keys("01012020") # escreve a data de inicio padrao 01/01/2020
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataFim"]').send_keys(datetime.now().strftime("%d%m%Y")) # escreve a data de hoje
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clica em Empreendimentos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/ul/li[2]/a/label').click() # clica em todos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clica em Empreendimentos
-
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="GerarRelatorio"]').click() # clica em gerar relatorio
-                        sleep(7)
-                        self.relatories_id[relatorie] = self.navegador.find_element(By.XPATH, '//*[@id="result-table"]/tbody/tr[1]/td[1]').text
-                        finalizou = True
-                        print(P(f"relatorio {relatorie} foi gerado!"))
-                        break
-
-                    except Exception as error:
-                        self.navegador.get("https://patrimarengenharia.imobme.com/Relatorio/")
-                        Logs().register(status='Report', description=f"erro {num} ao gerar {relatorie=}", exception=traceback.format_exc())
-                        sleep(1)
-                if not finalizou:
-                    raise Exception(f"erro ao gerar {relatorie=}")
-
-            elif (relatorie:="imobme_controle_estoque") == rel:
-                finalizou:bool = False
-                for num in range(5):
-                    try:
-                        for _ in range(NUM_TENTATIVAS):
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Content"]').location_once_scrolled_into_view
-                            _find_element(browser=self.navegador, mod=By.ID, target='Relatorios_chzn').click() # clique em selecionar Relatorios
-                            _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Relatorios_chzn_o_5"]').click() # clique em IMOBME - Controle de Estoque
-                            sleep(TEMPO_ESPERA_TENTATIVA)
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="parametrosReport"]/div[2]/div[1]/div/div/button').click() # clica em Empreendimentos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="parametrosReport"]/div[2]/div[1]/div/div/ul/li[2]/a/label/input').click() # clica em todos
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="parametrosReport"]/div[2]/div[1]/div/div/button').click() # clica em Empreendimentos novamente para sair
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataBase"]').send_keys(datetime.now().strftime("%d%m%Y"))
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="GerarRelatorio"]').click() # clica em gerar relatorio
-                        sleep(7)
-                        self.relatories_id[relatorie] = self.navegador.find_element(By.XPATH, '//*[@id="result-table"]/tbody/tr[1]/td[1]').text
-                        finalizou = True
-                        print(P(f"relatorio {relatorie} foi gerado!"))
-                        break
-
-                    except Exception as error:
-                        self.navegador.get("https://patrimarengenharia.imobme.com/Relatorio/")
-                        Logs().register(status='Report', description=f"erro {num} ao gerar {relatorie=}", exception=traceback.format_exc())
-                        sleep(1)
-                if not finalizou:
-                    raise Exception(f"erro ao gerar {relatorie=}")
 
         if len(self.relatories_id) >= 1:
             return list(self.relatories_id.values())
@@ -509,6 +197,7 @@ class BotExtractionImobme():
             raise FileNotFoundError("nenhum relatório foi gerado")
         
     def start(self, relatories:list) -> None:
+        self.__startNav()
         self._login()
         
         print(P("iniciando geração de relatorios"))
@@ -563,7 +252,25 @@ class BotExtractionImobme():
         self.navegador.find_element(By.TAG_NAME, 'html').location
         print(P("extração de relatorios no imobme concluida!"))
         
+        self.navegador.close()
+        try:
+            del self.navegador
+        except:
+            pass
         
+        self.__tratar_relatorios_baixados()
+        print(P("tratamento dos relatorios finalizado!"))
+
+    def __tratar_relatorios_baixados(self):
+        for file in os.listdir(self.download_path):
+            file = os.path.join(self.download_path, file)
+        
+            app = xw.App(visible=False)
+            with app.books.open(file) as wb:
+                del wb.sheets[wb.sheet_names[0]]
+                wb.save()
+            app.kill()
+                
 if __name__ == "__main__":
     pass
 

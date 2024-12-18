@@ -2,7 +2,7 @@ import os
 from getpass import getuser
 import json
 
-class SharepointFolders:
+class FolderRegister:
     @property
     def value(self):
         if self.__value:
@@ -14,7 +14,9 @@ class SharepointFolders:
             
     
     def __init__(self, target:str , *, initial_path:str=f'C:\\Users\\{getuser()}') -> None:
-        self.__file_register_path = os.path.join(os.getcwd(), 'register.json')
+        self.__file_register_path = os.path.join(f'C:\\Users\\{getuser()}', 'foldersRegister.json')
+        
+        
         if not os.path.exists(self.__file_register_path):
             with open(self.__file_register_path, 'w', encoding='utf-8') as _file:
                 json.dump({}, _file)
@@ -32,8 +34,10 @@ class SharepointFolders:
             return json.load(_file)
         
     def __register(self, key, value):
+        dados = self.__read()
+        dados[key] = value
         with open(self.__file_register_path, 'w', encoding='utf-8') as _file:
-            json.dump({key:value}, _file)
+            json.dump(dados, _file)
 
     def find_path(self, *, target,  initial_path):
         base_path = initial_path
@@ -48,5 +52,5 @@ class SharepointFolders:
         return self.value
     
 if __name__ == "__main__":
-    SharepointFolders("RPA - Dados\\Relatorios Auditoria\\KPMG").value
+    print(FolderRegister("RPA - Dados\\Indices\\indices_financeiros.json").value)
     

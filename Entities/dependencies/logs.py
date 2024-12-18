@@ -55,7 +55,8 @@ class Logs:
 
             #print(response.text)
         except Exception as error:
-            print(error)
+            pass
+            #print(error)
                     
         
     def register(self, *, status:Literal['Error', 'Concluido', 'Report', 'Test'], description:str="", exception:str|None=traceback.format_exc(), file:str="Logs_Operation.csv", date_format:str='%d/%m/%Y %H:%M:%S', csv_register:bool=True):

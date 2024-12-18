@@ -1,1 +1,1 @@
-PROJECT_NAME:str = "Automacao Relatorio Auditoria"
+PROJECT_NAME:str = "Automacao Relatorio VGV Empreendimentos"
