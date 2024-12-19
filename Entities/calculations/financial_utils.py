@@ -9,10 +9,11 @@ def findPVMaior(row:pd.Series, df:pd.DataFrame):
     
     result:pd.Series = df[
         (df['Bloco'] == bloco) &
-        (df['Unidade'] == unidade)
+        (df['Unidade'] == unidade) &
+        (~df['Status Unidade'].isin(['Bloqueada', 'Disponível', 'Análise de Crédito / Risco']))
     ]['PV Maior s/ Extra']
     
-    return result.iloc[0] if not result.empty else ""
+    return result.iloc[-1] if not result.empty else ""
 
 def findDataProposta(row:pd.Series, df:pd.DataFrame):
     bloco = row['Nome Do Bloco']
@@ -20,10 +21,11 @@ def findDataProposta(row:pd.Series, df:pd.DataFrame):
     
     result:pd.Series = df[
         (df['Bloco'] == bloco) &
-        (df['Unidade'] == unidade)
+        (df['Unidade'] == unidade) &
+        (~df['Status Unidade'].isin(['Bloqueada', 'Disponível', 'Análise de Crédito / Risco']))
     ]['Data Base Proposta']
     
-    return result.iloc[0] if not result.empty else ""
+    return result.iloc[-1] if not result.empty else ""
 
 
 def findINCC(row:pd.Series, df:pd.DataFrame):
@@ -46,7 +48,7 @@ def findReajusteViabidade(row:pd.Series, incc:pd.Series):
         return incc/inncProposta
         
     except:
-        return nb.nan
+        return ""
     
 def findPVMaiorReajustado(row:pd.Series):
     try:
@@ -56,7 +58,36 @@ def findPVMaiorReajustado(row:pd.Series):
         return round(pmMaior * reajuste, 2)
         
     except:
-        return nb.nan
+        return ""
     
+    
+def findPrecoEstoque(row:pd.Series, df:pd.DataFrame):
+    bloco = row['Nome Do Bloco']
+    try:
+        unidade = str(int(row['Código Da Unidade']))
+    except:
+        unidade = row['Código Da Unidade']
+    
+    result:pd.Series = df[
+        (df['Torre/Bloco'].astype(str) == bloco) &
+        (df['Unidade/Casa'].astype(str) == unidade)
+    ]['Preço - Margem de Desconto']
+    
+    return result.iloc[0] if not result.empty else ""
+
+def findTipo(row:pd.Series, df:pd.DataFrame):
+    bloco = row['Nome Do Bloco']
+    try:
+        unidade = str(int(row['Código Da Unidade']))
+    except:
+        unidade = row['Código Da Unidade']
+    
+    result:pd.Series = df[
+        (df['Torre/Bloco'].astype(str) == bloco) &
+        (df['Unidade/Casa'].astype(str) == unidade)
+    ]['Tipo']
+    
+    return result.iloc[0] if not result.empty else ""    
+
 if __name__ == "__main__":
     pass
