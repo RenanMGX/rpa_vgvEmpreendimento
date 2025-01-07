@@ -7,6 +7,7 @@
 *Logs
 *.json
 *Download_Arquivos
+*IC_BASE
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,venv,visualstudiocode

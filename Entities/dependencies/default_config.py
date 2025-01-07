@@ -3,7 +3,7 @@ from getpass import getuser
 
 default:Dict[str, Dict[str,object]] = {
     'credential': {
-        'imobme': 'IMOBME_PRD'
+        'imobme': "IMOBME_PRD"
     },
     'log': {
         'hostname': 'Patrimar-RPA',
