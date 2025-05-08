@@ -4,28 +4,20 @@ from dateutil.relativedelta import relativedelta
 import numpy as nb
 
 def findPVMaior(row:pd.Series, df:pd.DataFrame):
-    centro = row['Código Empreendimento']
-    bloco = row['Nome Do Bloco']
-    unidade = row['Código Da Unidade']
+    pep = row['PEP Unidade']
     
     result:pd.Series = df[
-        (df['Código Empreendimento'] == centro) &
-        (df['Bloco'] == bloco) &
-        (df['Unidade'] == unidade) &
+        (df['Elemento PEP'] == pep) &
         (~df['Status Unidade'].isin(['Bloqueada', 'Disponível', 'Análise de Crédito / Risco']))
     ]['PV Maior s/ Extra']
     
     return result.iloc[-1] if not result.empty else ""
 
 def findDataProposta(row:pd.Series, df:pd.DataFrame):
-    centro = row['Código Empreendimento']
-    bloco = row['Nome Do Bloco']
-    unidade = row['Código Da Unidade']
+    pep = row['PEP Unidade']
     
     result:pd.Series = df[
-        (df['Código Empreendimento'] == centro) &
-        (df['Bloco'] == bloco) &
-        (df['Unidade'] == unidade) &
+        (df['Elemento PEP'] == pep) &
         (~df['Status Unidade'].isin(['Bloqueada', 'Disponível', 'Análise de Crédito / Risco']))
     ]['Data Base Proposta']
     
@@ -66,33 +58,19 @@ def findPVMaiorReajustado(row:pd.Series):
     
     
 def findPrecoEstoque(row:pd.Series, df:pd.DataFrame):
-    centro = row['Código Empreendimento']
-    bloco = row['Nome Do Bloco']
-    try:
-        unidade = str(int(row['Código Da Unidade']))
-    except:
-        unidade = row['Código Da Unidade']
+    pep = row['PEP Unidade']
     
     result:pd.Series = df[
-        (df['Divisão'].astype(str) == centro) &
-        (df['Torre/Bloco'].astype(str) == bloco) &
-        (df['Unidade/Casa'].astype(str) == unidade)
+        df['PEP'].astype(str) == pep
     ]['Preço - Margem de Desconto']
     
     return result.iloc[0] if not result.empty else ""
 
 def findTipo(row:pd.Series, df:pd.DataFrame):
-    centro = row['Código Empreendimento']
-    bloco = row['Nome Do Bloco']
-    try:
-        unidade = str(int(row['Código Da Unidade']))
-    except:
-        unidade = row['Código Da Unidade']
+    pep = row['PEP Unidade']
     
     result:pd.Series = df[
-        (df['Divisão'].astype(str) == centro) &
-        (df['Torre/Bloco'].astype(str) == bloco) &
-        (df['Unidade/Casa'].astype(str) == unidade)
+        df['PEP'].astype(str) == pep
     ]['Tipo']
     
     return result.iloc[0] if not result.empty else ""    

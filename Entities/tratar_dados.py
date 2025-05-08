@@ -143,7 +143,7 @@ class TratarDados:
         Returns:
             pd.DataFrame: DataFrame contendo os dados tratados.
         """
-        df = self.df_empre[['Código Empreendimento', 'Nome Do Empreendimento', 'Nome Do Bloco', 'Código Da Unidade', 'Área Privativa']].copy()
+        df = self.df_empre[['Código Empreendimento', 'Nome Do Empreendimento', 'Nome Do Bloco', 'Código Da Unidade', 'Área Privativa', 'PEP Unidade']].copy()
         
         df_vendas = self.df_vendas
         df_incc = self.df_incc

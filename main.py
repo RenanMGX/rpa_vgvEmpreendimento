@@ -49,18 +49,26 @@ class Execute:
         
     @staticmethod
     def start_all():
-        date_now = datetime.now().replace(day=1,hour=0,minute=0,second=0,microsecond=0)
+        date_now = datetime(2025, 4, 17).replace(day=1,hour=0,minute=0,second=0,microsecond=0)
         dates:List[datetime] = []
-        for _ in range(25):
+        for _ in range(30):
             dates.append(date_now)
             date_now = date_now - relativedelta(months=1)
         
         for date in dates:
+            msg = f"Iniciado {date} "
+            print(msg, end='\r')
             Execute.start(date=date, extract_imobme=False)
+            print(f"{msg} - Finalizado!")
+    
+    @staticmethod     
+    def test():
+        Execute.start(date=datetime(2025, 4, 17), extract_imobme=False)
               
 if __name__ == "__main__":
     Arguments({
         'start': Execute.start,
-        'start_all': Execute.start_all
+        'start_all': Execute.start_all,
+        'teste': Execute.test
     })
     
