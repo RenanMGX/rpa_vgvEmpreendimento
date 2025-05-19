@@ -149,6 +149,7 @@ class TratarDados:
         df_incc = self.df_incc
         df_ic = self.df_ic
         incc_menos2 = self.inccMenos2
+                
         
         df['PV MAIOR S/ EXTRA'] = df.apply(financial_utils.findPVMaior, axis=1, args=(df_vendas,))
         df['DATA BASE PROPOSTA'] = df.apply(financial_utils.findDataProposta, axis=1, args=(df_vendas,))

@@ -7,7 +7,7 @@ from typing import List
 
 class Execute:
     @staticmethod
-    def start(date = datetime.now(), extract_imobme:bool=True):
+    def start(date = datetime.now(), extract_imobme:bool=True, save:bool=True):
         
         
         path_incc = os.path.join(FolderRegister(r"PATRIMAR ENGENHARIA S A\RPA - Documentos\RPA - Dados\Indices").value, "indices_financeiros.json")
@@ -38,18 +38,23 @@ class Execute:
         else:
             df_target = pd.DataFrame()
             
+        # import pdb; pdb.set_trace()
+        # df_target[df_target['create_date'] >= (date - relativedelta(years=2)).replace(day=1).strftime("%Y-%m-%dT00:00:00.000")]['create_date'].unique()
+        
         if not df_target.empty:
             df_target = df_target[
-                pd.to_datetime(df_target['create_date']) != date.replace(day=1)
+                pd.to_datetime(df_target['create_date']) != date.replace(day=1).strftime("%Y-%m-%dT00:00:00.000")
             ]  
             
+        
         df = pd.concat([df_target, df_mes_selecionado], ignore_index=True)
         
-        df.to_json(path_target_file, orient='records', date_format='iso')
+        if save:
+            df.to_json(path_target_file, orient='records', date_format='iso')
         
     @staticmethod
     def start_all():
-        date_now = datetime(2025, 4, 17).replace(day=1,hour=0,minute=0,second=0,microsecond=0)
+        date_now = datetime.now().replace(day=1,hour=0,minute=0,second=0,microsecond=0)
         dates:List[datetime] = []
         for _ in range(30):
             dates.append(date_now)
@@ -63,7 +68,7 @@ class Execute:
     
     @staticmethod     
     def test():
-        Execute.start(date=datetime(2025, 4, 17), extract_imobme=False)
+        Execute.start(date=datetime.now(), extract_imobme=False, save=False)
               
 if __name__ == "__main__":
     Arguments({
