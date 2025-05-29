@@ -49,7 +49,6 @@ class Execute:
         
         df = pd.concat([df_target, df_mes_selecionado], ignore_index=True)
         
-        if save:
             df.to_json(path_target_file, orient='records', date_format='iso')
         
     @staticmethod
