@@ -170,8 +170,8 @@ class ExtractionImobme():
                         _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
                         _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="DataFim"]').send_keys(datetime.now().strftime("%d%m%Y")) # escreve a data hoje
                         _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="Header"]/div[1]/img[1]').click() #<-------------------
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="TipoDataSelecionada_chzn"]/a').click() # clique em Tipo Data
-                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="TipoDataSelecionada_chzn_o_0"]').click() # clique em Data Lançamento Venda
+                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="TipoDataSelecionada_chosen"]/a').click() # clique em Tipo Data
+                        _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="TipoDataSelecionada_chosen_o_0"]').click() # clique em Data Lançamento Venda
                         _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clique em Empreendimentos
                         _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/ul/li[2]/a/label/input').click() # clique em Todos
                         _find_element(browser=self.navegador, mod=By.XPATH, target='//*[@id="dvEmpreendimento"]/div[1]/div/div/button').click() # clique em Empreendimentos

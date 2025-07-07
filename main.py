@@ -15,7 +15,10 @@ class Execute:
             raise FileNotFoundError(f"A planilha '{path_incc=}' não foi encontrada!")
         df_incc = pd.read_json(path_incc)
         
-        path_ic = os.path.join(os.getcwd(), r'IC_BASE\Base Estoque.xlsx')
+        path_ic = os.path.join(os.getcwd(), r'IC_BASE')
+        path_ic = [os.path.join(path_ic, file) for file in os.listdir(path_ic)]
+        path_ic = path_ic[0]
+        #path_ic = os.path.join(os.getcwd(), r'IC_BASE\Base Estoque.xlsx')
         if not os.path.exists(path_ic):
             raise FileNotFoundError(f"A planilha '{path_ic=}' não foi encontrada!")
         df_ic = pd.read_excel(path_ic, sheet_name='Base Estoque')
@@ -49,7 +52,7 @@ class Execute:
         
         df = pd.concat([df_target, df_mes_selecionado], ignore_index=True)
         
-            df.to_json(path_target_file, orient='records', date_format='iso')
+        df.to_json(path_target_file, orient='records', date_format='iso')
         
     @staticmethod
     def start_all():
@@ -65,14 +68,29 @@ class Execute:
             Execute.start(date=date, extract_imobme=False)
             print(f"{msg} - Finalizado!")
     
+    @staticmethod
+    def start_date(param):
+        if param:
+            date = datetime.strptime(param, "%d.%m.%Y")
+        else:
+            date = datetime.now()
+        
+        Execute.start(date=date, extract_imobme=True, save=True)
+    
     @staticmethod     
-    def test():
-        Execute.start(date=datetime.now(), extract_imobme=False, save=False)
+    def test(param):
+        if param:
+            date = datetime.strptime(param, "%d.%m.%Y")
+        else:
+            date = datetime.now()
+        
+        Execute.start(date=date, extract_imobme=False, save=False)
               
 if __name__ == "__main__":
     Arguments({
         'start': Execute.start,
         'start_all': Execute.start_all,
+        'start_date': Execute.start_date,
         'teste': Execute.test
     })
     
