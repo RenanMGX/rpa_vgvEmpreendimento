@@ -5,13 +5,16 @@ from datetime import datetime
 import re
 from .functions import Functions
 import traceback
+import asyncio
 import requests
+requests.packages.urllib3.disable_warnings(requests.packages.urllib3.exceptions.InsecureRequestWarning) #type:ignore
+
 import json
 from getpass import getuser
 from socket import gethostname
 from .project_name import PROJECT_NAME
 from .config import Config
-from functions import P
+
 
 class Logs:
     @property
@@ -34,7 +37,7 @@ class Logs:
             
     def online_register(self, *, name_rpa:str, status:Literal[0,1,2,99], date:datetime, descricao:str, exception:str="", nome_pc:str="", nome_agente=""):
         try:
-            reqUrl = f"http://{self.__hostname}:{self.__port}/api/rpa_logs/registrar"
+            reqUrl = f"https://{self.__hostname}:{self.__port}/api/rpa_logs/registrar"
 
             headersList = {
             "Authorization": f"Token {self.__token}",
@@ -51,12 +54,11 @@ class Logs:
             "exception": str(exception)
             })
 
-            response = requests.request("PATCH", reqUrl, data=payload,  headers=headersList)
+            response = requests.request("PATCH", reqUrl, data=payload,  headers=headersList, verify=False)
 
             #print(response.text)
         except Exception as error:
-            pass
-            #print(error)
+            print(error)
                     
         
     def register(self, *, status:Literal['Error', 'Concluido', 'Report', 'Test'], description:str="", exception:str|None=traceback.format_exc(), file:str="Logs_Operation.csv", date_format:str='%d/%m/%Y %H:%M:%S', csv_register:bool=True):
@@ -102,9 +104,7 @@ class Logs:
                 #pass
                 Functions.fechar_excel(file)
             except Exception as error:
-                raise error  
-        
-        print(P(f"{status}: {str(description)}", color='magenta')) 
+                raise error   
 
 if __name__ == "__main__":
     bot = Logs("testes")
